@@ -48,24 +48,37 @@ const App = () => {
             return;
         }
 
-        // Creazione del payload
-        const formData = new FormData();
-        formData.append("query", textareaContent.trim());
-        formData.append("enableExtract", leftEnabled.toString());
-        formData.append("enableFill", rightEnabled.toString());
+        // Mostra il SweetAlert con la barra di caricamento
+        Swal.fire({
+            title: "Elaborazione in corso...",
+            html: '<div class="w-full bg-gray-200 rounded-full"><div class="bg-blue-500 text-xs font-medium text-blue-100 text-center p-1 leading-none rounded-full" style="width: 0%;" id="loading-bar">0%</div></div>',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
 
-        if (leftEnabled && leftFile) {
-            formData.append("files", leftFile);
-        }
+        // Simula il progresso
+        const updateProgress = (progress) => {
+            const loadingBar = document.getElementById("loading-bar");
+            if (loadingBar) {
+                loadingBar.style.width = `${progress}%`;
+                loadingBar.textContent = `${progress}%`;
+            }
+        };
 
-        if (rightEnabled && rightFile) {
-            formData.append("files", rightFile);
-        }
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 10;
+            updateProgress(progress);
+            if (progress >= 100) clearInterval(interval);
+        }, 300);
 
         try {
             const response = await fetch("http://localhost:3000/process/", {
                 method: "POST",
-                body: formData,
+                body: new FormData(),
             });
 
             if (response.ok) {
@@ -91,6 +104,9 @@ const App = () => {
                 title: "Errore di rete",
                 text: "Impossibile contattare il server.",
             });
+        } finally {
+            clearInterval(interval); // Ferma l'intervallo
+            Swal.close(); // Chiude la finestra di caricamento
         }
     };
 
@@ -124,27 +140,40 @@ const App = () => {
                     className="cursor-pointer hover:scale-110 transition-transform"
                 >
                     <TbArrowBigRightFilled
-                        size={48} // Dimensione dell'icona (48px)
+                        size={48}
                         className={leftEnabled ? "text-green-500" : "text-red-500"}
                     />
                 </button>
             </div>
 
             {/* Colonna centrale */}
-            <div className="border rounded-lg bg-gray-50 flex flex-col p-6">
-        <textarea
-            className="w-full h-2/3 border rounded-lg p-4 text-sm resize-none mb-6"
-            placeholder="Dati da estrarre qui..."
-            value={textareaContent}
-            onChange={(e) => setTextareaContent(e.target.value)}
-        ></textarea>
+            <div className="border rounded-lg bg-gray-50 flex flex-col p-6 relative">
+                <textarea
+                    className="w-full h-2/3 border rounded-lg p-4 text-sm resize-none mb-6"
+                    placeholder="Dati da estrarre qui..."
+                    value={textareaContent}
+                    onChange={(e) => setTextareaContent(e.target.value)}
+                ></textarea>
                 <button
                     className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-lg mb-6"
                     onClick={handleProcess}
                 >
                     Elabora
                 </button>
-                <JsonBox jsonContent={jsonResult || {}} />
+                <JsonBox
+                    jsonContent={jsonResult || {}}
+                    onCopy={(e) => {
+                        navigator.clipboard.writeText(
+                            JSON.stringify(jsonResult || {}, null, 2)
+                        );
+                        const button = e.target;
+                        const originalText = button.textContent;
+                        button.textContent = "Copiato!";
+                        setTimeout(() => {
+                            button.textContent = originalText;
+                        }, 1000);
+                    }}
+                />
                 <div className="flex justify-end space-x-4 mt-4">
                     <img
                         src="https://i.ibb.co/s5vwsZk/csv-file.png"
@@ -172,7 +201,7 @@ const App = () => {
                     className="cursor-pointer hover:scale-110 transition-transform"
                 >
                     <TbArrowBigRightFilled
-                        size={48} // Dimensione dell'icona (48px)
+                        size={48}
                         className={rightEnabled ? "text-green-500" : "text-red-500"}
                     />
                 </button>
