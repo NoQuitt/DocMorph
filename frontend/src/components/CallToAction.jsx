@@ -22,12 +22,15 @@ const CallToAction = () => {
           Revolutionize document management with tomorrow's technology, built for today's challenges.
         </motion.p>
         <div className="flex justify-center items-center space-x-8">
-          <motion.button
+          <motion.a
+            href="/application"
+            target="_blank"
+            rel="noopener noreferrer"
             className="py-3 px-8 bg-gradient-to-r from-yellow-500 to-pink-500 text-black font-bold rounded-full shadow-lg hover:scale-125 transition-transform"
             whileHover={{ rotate: 15, scale: 1.2 }}
           >
             Get Started
-          </motion.button>
+          </motion.a>
           <motion.div
             className="text-center p-4 bg-opacity-20 bg-white rounded-lg shadow-md"
             initial={{ opacity: 0, y: 50 }}

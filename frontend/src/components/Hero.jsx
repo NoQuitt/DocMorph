@@ -12,12 +12,15 @@ const Hero = () => {
         <p className="text-lg lg:text-2xl mt-4 text-gray-300 max-w-2xl">
           Reinvent document management with cutting-edge AI technology.
         </p>
-        <motion.button
+        <motion.a
+          href="/application"
+          target="_blank"
+          rel="noopener noreferrer"
           className="mt-8 py-3 px-10 bg-gradient-to-r from-pink-500 to-yellow-500 text-black font-bold rounded-full hover:scale-110 transition-transform shadow-lg hover:shadow-pink-500/50"
           whileHover={{ scale: 1.2 }}
         >
           Get Started
-        </motion.button>
+        </motion.a>
       </div>
     </section>
   );

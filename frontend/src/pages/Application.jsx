@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import Column from "./components/Column";
-import JsonBox from "./components/JsonBox";
+import Column from "../components/Column";
+import JsonBox from "../components/JsonBox";
 import Swal from "sweetalert2";
 import { TbArrowBigRightFilled } from "react-icons/tb";
 import * as XLSX from "xlsx";
 
-const App = () => {
+const Application = () => {
     const [leftEnabled, setLeftEnabled] = useState(true);
     const [rightEnabled, setRightEnabled] = useState(true);
     const [leftFile, setLeftFile] = useState(null);
@@ -13,28 +13,28 @@ const App = () => {
     const [textareaContent, setTextareaContent] = useState("");
     const [jsonResult, setJsonResult] = useState(null);
 
-    // Gestione caricamento file
+    // File upload handling
     const handleFileSelect = (side, e) => {
         const file = e.target.files[0] || null;
         if (side === "left") setLeftFile(file);
         if (side === "right") setRightFile(file);
     };
 
-    // Funzione per avviare il download
+    // Function to initiate download
     const initiateDownload = (url) => {
         const link = document.createElement("a");
         link.href = url;
-        link.download = ""; // Lato server deve specificare il nome del file
+        link.download = ""; // Server-side should specify the file name
         link.click();
     };
 
-    // Generazione file CSV
+    // Generate CSV file
     const generateCSV = () => {
         if (!jsonResult) {
             Swal.fire({
                 icon: "error",
-                title: "Errore",
-                text: "Nessun dato da esportare!",
+                title: "Error",
+                text: "No data to export!",
             });
             return;
         }
@@ -46,11 +46,9 @@ const App = () => {
                     const fullKey = parentKey ? `${parentKey}.${key}` : key;
     
                     if (Array.isArray(obj[key])) {
-                        // Se l'array contiene stringhe o valori scalari, aggiungilo direttamente
                         if (obj[key].every((item) => typeof item === "string" || typeof item === "number")) {
-                            rows.push({ Key: fullKey, Value: obj[key].join(", ") }); // Unisci gli elementi dell'array
+                            rows.push({ Key: fullKey, Value: obj[key].join(", ") });
                         } else {
-                            // Altrimenti, itera sugli elementi dell'array
                             obj[key].forEach((item, index) => {
                                 recursiveFlatten(item, `${fullKey}[${index}]`);
                             });
@@ -68,14 +66,13 @@ const App = () => {
     
         const data = flattenJSON(jsonResult);
     
-        // Genera il contenuto CSV
         const headers = ["Key", "Value"];
-        const csvRows = [headers.join(",")]; // Header row
+        const csvRows = [headers.join(",")];
     
         data.forEach((row) => {
-            let key = row.Key.replace(/^extractedData\./, ""); // Rimuovi 'extractedData.'
+            let key = row.Key.replace(/^extractedData\./, "");
             const values = [key, row.Value];
-            csvRows.push(values.map((v) => `"${v}"`).join(",")); // Escape valori con virgolette
+            csvRows.push(values.map((v) => `"${v}"`).join(","));
         });
     
         const csvContent = `data:text/csv;charset=utf-8,${csvRows.join("\n")}`;
@@ -87,15 +84,14 @@ const App = () => {
         link.click();
         document.body.removeChild(link);
     };
-    
 
-    // Generazione file XLSX
+    // Generate XLSX file
     const generateXLSX = () => {
         if (!jsonResult) {
             Swal.fire({
                 icon: "error",
-                title: "Errore",
-                text: "Nessun dato da esportare!",
+                title: "Error",
+                text: "No data to export!",
             });
             return;
         }
@@ -120,18 +116,18 @@ const App = () => {
 
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Dati Estratti");
+        XLSX.utils.book_append_sheet(wb, ws, "Extracted Data");
 
         XLSX.writeFile(wb, "data.xlsx");
     };
 
-    // Funzione per elaborare i dati
+    // Process data
     const handleProcess = async () => {
         if (!textareaContent.trim()) {
             Swal.fire({
                 icon: "error",
-                title: "Errore",
-                text: "Manca il testo nella textarea.",
+                title: "Error",
+                text: "Textarea content is missing.",
             });
             return;
         }
@@ -139,8 +135,8 @@ const App = () => {
         if (leftEnabled && !leftFile) {
             Swal.fire({
                 icon: "error",
-                title: "Errore",
-                text: "Manca il file di sinistra.",
+                title: "Error",
+                text: "Left file is missing.",
             });
             return;
         }
@@ -148,15 +144,14 @@ const App = () => {
         if (rightEnabled && !rightFile) {
             Swal.fire({
                 icon: "error",
-                title: "Errore",
-                text: "Manca il file di destra.",
+                title: "Error",
+                text: "Right file is missing.",
             });
             return;
         }
 
-        // Mostra barra di caricamento
         Swal.fire({
-            title: "Elaborazione in corso...",
+            title: "Processing...",
             html: `<div class="swal2-loader"></div>`,
             allowOutsideClick: false,
             didOpen: () => {
@@ -187,30 +182,29 @@ const App = () => {
                 const result = await response.json();
                 setJsonResult(result);
 
-                // Scarica automaticamente il file se presente un downloadLink
                 if (result.downloadLink) {
                     initiateDownload(`http://localhost:3000${result.downloadLink}`);
                 }
 
                 Swal.fire({
                     icon: "success",
-                    title: "Successo",
-                    text: "Elaborazione completata!",
+                    title: "Success",
+                    text: "Processing completed!",
                 });
             } else {
                 const errorText = await response.text();
                 Swal.fire({
                     icon: "error",
-                    title: "Errore nel backend",
-                    text: errorText || "Errore sconosciuto!",
+                    title: "Backend error",
+                    text: errorText || "Unknown error!",
                 });
             }
         } catch (error) {
-            console.error("Errore nella richiesta:", error);
+            console.error("Request error:", error);
             Swal.fire({
                 icon: "error",
-                title: "Errore di rete",
-                text: "Impossibile contattare il server.",
+                title: "Network error",
+                text: "Unable to contact the server.",
             });
         }
     };
@@ -218,7 +212,7 @@ const App = () => {
     return (
         <div className="w-full h-screen grid lg:grid-cols-[1fr_auto_1fr_auto_1fr] grid-rows-[auto] lg:grid-rows-none lg:gap-0 gap-4 p-4 lg:p-0">
             <Column
-                title="Estrazione"
+                title="Extraction"
                 enabled={leftEnabled}
                 toggleEnabled={() => setLeftEnabled(!leftEnabled)}
                 onFileSelect={(e) => handleFileSelect("left", e)}
@@ -244,7 +238,7 @@ const App = () => {
             <div className="border rounded-lg bg-gray-50 flex flex-col p-6 relative">
                 <textarea
                     className="w-full h-2/3 border rounded-lg p-4 text-sm resize-none mb-6"
-                    placeholder="Dati da estrarre qui..."
+                    placeholder="Data to extract here..."
                     value={textareaContent}
                     onChange={(e) => setTextareaContent(e.target.value)}
                 ></textarea>
@@ -252,7 +246,7 @@ const App = () => {
                     className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-lg mb-6"
                     onClick={handleProcess}
                 >
-                    Elabora
+                    Process
                 </button>
                 <JsonBox
                     jsonContent={jsonResult || {}}
@@ -261,27 +255,26 @@ const App = () => {
                             JSON.stringify(jsonResult || {}, null, 2)
                         );
                         const button = e.target;
-                        button.textContent = "Copiato!";
+                        button.textContent = "Copied!";
                         setTimeout(() => {
-                            button.textContent = "Copia";
+                            button.textContent = "Copy";
                         }, 1000);
                     }}
                 />
-                {/* Pulsanti per il download CSV e XLSX */}
                 <div className="flex justify-end space-x-4 mt-4">
                     <img
-                        src="https://i.ibb.co/s5vwsZk/csv-file.png"
+                        src="/assets/images/csv-file.png"
                         alt="CSV Icon"
                         className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
-                        title="Scarica CSV"
-                        onClick={generateCSV} // Funzione di download CSV
+                        title="Download CSV"
+                        onClick={generateCSV}
                     />
                     <img
-                        src="https://i.ibb.co/8BrYpCy/xlsx.png"
+                        src="/assets/images/xlsx.png"
                         alt="XLSX Icon"
                         className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
-                        title="Scarica XLSX"
-                        onClick={generateXLSX} // Funzione di download XLSX
+                        title="Download XLSX"
+                        onClick={generateXLSX}
                     />
                 </div>
             </div>
@@ -303,7 +296,7 @@ const App = () => {
                 </button>
             </div>
             <Column
-                title="Compilazione"
+                title="Filling"
                 enabled={rightEnabled}
                 toggleEnabled={() => setRightEnabled(!rightEnabled)}
                 onFileSelect={(e) => handleFileSelect("right", e)}
@@ -313,4 +306,4 @@ const App = () => {
     );
 };
 
-export default App;
+export default Application;
