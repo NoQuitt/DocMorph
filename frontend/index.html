@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Processor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    .mega-plus {
+      font-size: 5rem;
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .mega-plus:hover {
+      transform: scale(1.1);
+    }
+    .disabled-area .content {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .file-name {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: #1f2937;
+      word-break: break-word;
+      text-align: center;
+    }
+    .json-box {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      overflow-y: auto;
+      max-height: 150px;
+      font-family: monospace;
+      font-size: 0.875rem;
+      color: #1f2937;
+      position: relative;
+    }
+    .copy-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background-color: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .copy-button:hover {
+      background-color: #2563eb;
+    }
+    .section-title {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #1f2937;
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+<div class="w-full h-screen grid grid-cols-3 gap-4 p-6">
+  <!-- Colonna di sinistra -->
+  <div id="leftColumn" class="border rounded-lg bg-gray-50 flex flex-col items-center justify-center relative">
+    <div class="section-title">Estrazione</div>
+    <!-- Switch per abilitare/disabilitare -->
+    <div class="absolute top-4 right-4 flex items-center">
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="toggleLeft" class="sr-only peer" checked>
+        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-500"></div>
+        <div class="peer-checked:translate-x-6 peer-checked:bg-white w-5 h-5 bg-gray-400 rounded-full absolute left-0 top-0 transition"></div>
+      </label>
+    </div>
+    <!-- Contenuto della colonna -->
+    <div class="content w-full h-full flex flex-col items-center justify-center">
+      <div class="mega-plus" onclick="handleLeftClick()">+</div>
+      <input type="file" id="fileInputLeft" class="hidden" accept="application/pdf, text/plain, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="showFileName('left')" />
+      <p id="fileNameLeft" class="file-name"></p>
+    </div>
+  </div>
+
+  <!-- Colonna centrale -->
+  <div class="border rounded-lg bg-gray-50 flex flex-col p-6">
+    <textarea id="textareaCenter" class="w-full h-2/3 border rounded-lg p-4 text-sm resize-none mb-6" placeholder="Dati da estrarre qui..."></textarea>
+    <button id="processButton" class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-lg mb-6">
+      Elabora
+    </button>
+    <div class="json-box">
+      <button class="copy-button" onclick="copyJSON()">Copia</button>
+      <pre id="jsonResult" class="text-sm text-gray-800">{
+  "name": "Mario Rossi",
+  "email": "mario.rossi@example.com",
+  "phone": "+39 123 456 7890"
+}</pre>
+    </div>
+    <div class="flex justify-end space-x-4 mt-4">
+      <img src="https://www.citypng.com/public/uploads/preview/black-csv-file-download-icon-png-11664500650frxkya3naw.png" alt="Scarica CSV" class="w-8 h-8 cursor-pointer hover:scale-110 transition-transform" onclick="downloadCSV()" title="Scarica CSV">
+      <img src="https://cdn.icon-icons.com/icons2/1197/PNG/512/1490891087-09_82641.png" alt="Scarica XLSX" class="w-8 h-8 cursor-pointer hover:scale-110 transition-transform" onclick="downloadXLSX()" title="Scarica XLSX">
+    </div>
+  </div>
+
+  <!-- Colonna di destra -->
+  <div id="rightColumn" class="border rounded-lg bg-gray-50 flex flex-col items-center justify-center relative">
+    <div class="section-title">Compilazione</div>
+    <!-- Switch per abilitare/disabilitare -->
+    <div class="absolute top-4 right-4 flex items-center">
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" id="toggleRight" class="sr-only peer" checked>
+        <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-500"></div>
+        <div class="peer-checked:translate-x-6 peer-checked:bg-white w-5 h-5 bg-gray-400 rounded-full absolute left-0 top-0 transition"></div>
+      </label>
+    </div>
+    <!-- Contenuto della colonna -->
+    <div class="content w-full h-full flex flex-col items-center justify-center">
+      <div class="mega-plus" onclick="handleRightClick()">+</div>
+      <input type="file" id="fileInputRight" class="hidden" accept="application/pdf, text/plain, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="showFileName('right')" />
+      <p id="fileNameRight" class="file-name"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Aggiungiamo un listener al pulsante "Elabora"
+  document.getElementById("processButton").addEventListener("click", async function () {
+    const textarea = document.getElementById("textareaCenter");
+    const toggleLeft = document.getElementById("toggleLeft").checked;
+    const toggleRight = document.getElementById("toggleRight").checked;
+    const fileInputLeft = document.getElementById("fileInputLeft");
+    const fileInputRight = document.getElementById("fileInputRight");
+
+    // Verifica errori
+    let errorMessage = "";
+    if (toggleLeft && fileInputLeft.files.length === 0) {
+      errorMessage += "Manca il file di sinistra.\n";
+    }
+    if (toggleRight && fileInputRight.files.length === 0) {
+      errorMessage += "Manca il file di destra.\n";
+    }
+    if (textarea.value.trim() === "") {
+      errorMessage += "Manca il testo nella textarea.\n";
+    }
+
+    if (errorMessage) {
+      Swal.fire({
+        icon: "error",
+        title: "Errore",
+        text: errorMessage.trim(),
+      });
+      return;
+    }
+
+    // Creazione del payload
+    const formData = new FormData();
+    formData.append("query", textarea.value.trim());
+    formData.append("enableExtract", toggleLeft.toString());
+    formData.append("enableFill", toggleRight.toString());
+
+    if (toggleLeft && fileInputLeft.files.length > 0) {
+      formData.append("files[0]", fileInputLeft.files[0]);
+    }
+
+    if (toggleRight && fileInputRight.files.length > 0) {
+      formData.append("files[1]", fileInputRight.files[0]);
+    }
+
+    console.log("FormData contenuto:");
+    formData.forEach((value, key) => {
+      console.log(`${key}:`, value);
+    });
+
+    try {
+      // Invio della richiesta POST
+      const response = await fetch("http://localhost/process", {
+        method: "POST",
+        body: formData,
+      });
+
+      // Gestione della risposta
+      if (response.ok) {
+        const result = await response.json();
+        document.getElementById("jsonResult").textContent = JSON.stringify(result, null, 2);
+        Swal.fire({
+          icon: "success",
+          title: "Successo",
+          text: "Elaborazione completata!",
+        });
+      } else {
+        const errorText = await response.text();
+        Swal.fire({
+          icon: "error",
+          title: "Errore nel backend",
+          text: errorText || "Errore sconosciuto!",
+        });
+      }
+    } catch (error) {
+      console.error("Errore nella richiesta:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Errore di rete",
+        text: "Impossibile contattare il server.",
+      });
+    }
+  });
+
+  // Abilitazione/disabilitazione area sinistra
+  document.getElementById("toggleLeft").addEventListener("change", function () {
+    const leftColumn = document.getElementById("leftColumn");
+    if (this.checked) {
+      leftColumn.classList.remove("disabled-area");
+    } else {
+      leftColumn.classList.add("disabled-area");
+    }
+  });
+
+  // Abilitazione/disabilitazione area destra
+  document.getElementById("toggleRight").addEventListener("change", function () {
+    const rightColumn = document.getElementById("rightColumn");
+    if (this.checked) {
+      rightColumn.classList.remove("disabled-area");
+    } else {
+      rightColumn.classList.add("disabled-area");
+    }
+  });
+
+  // Gestore per il click sul mega +
+  function handleLeftClick() {
+    const fileInputLeft = document.getElementById("fileInputLeft");
+    fileInputLeft.click();
+  }
+
+  function handleRightClick() {
+    const fileInputRight = document.getElementById("fileInputRight");
+    fileInputRight.click();
+  }
+
+  // Mostra il nome del file caricato
+  function showFileName(side) {
+    const fileInput = side === 'left' ? document.getElementById("fileInputLeft") : document.getElementById("fileInputRight");
+    const fileName = side === 'left' ? document.getElementById("fileNameLeft") : document.getElementById("fileNameRight");
+    fileName.textContent = fileInput.files.length > 0 ? `File caricato: ${fileInput.files[0].name}` : '';
+  }
+
+  // Funzione per simulare il download di un file CSV
+  function downloadCSV() {
+    const csvContent = "data:text/csv;charset=utf-8,Name,Email,Phone\nMario Rossi,mario.rossi@example.com,+39 123 456 7890";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "result.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Funzione per simulare il download di un file XLSX
+  function downloadXLSX() {
+    alert("Funzione XLSX in sviluppo!");
+  }
+
+  // Funzione per copiare il JSON negli appunti
+  function copyJSON() {
+    const jsonText = document.getElementById("jsonResult").innerText;
+    navigator.clipboard.writeText(jsonText).then(() => {
+      alert("JSON copiato negli appunti!");
+    });
+  }
+</script>
+</body>
+</html>
