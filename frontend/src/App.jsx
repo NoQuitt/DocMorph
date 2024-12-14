@@ -20,6 +20,14 @@ const App = () => {
         if (side === "right") setRightFile(file);
     };
 
+    // Funzione per avviare il download
+    const initiateDownload = (url) => {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = ""; // Lato server deve specificare il nome del file
+        link.click();
+    };
+
     // Generazione file CSV
     const generateCSV = () => {
         if (!jsonResult) {
@@ -156,6 +164,11 @@ const App = () => {
                 const result = await response.json();
                 setJsonResult(result);
 
+                // Scarica automaticamente il file se presente un downloadLink
+                if (result.downloadLink) {
+                    initiateDownload(`http://localhost:3000${result.downloadLink}`);
+                }
+
                 Swal.fire({
                     icon: "success",
                     title: "Successo",
@@ -180,7 +193,7 @@ const App = () => {
     };
 
     return (
-        <div className="w-full h-screen grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-0">
+        <div className="w-full h-screen grid lg:grid-cols-[1fr_auto_1fr_auto_1fr] grid-rows-[auto] lg:grid-rows-none lg:gap-0 gap-4 p-4 lg:p-0">
             <Column
                 title="Estrazione"
                 enabled={leftEnabled}
@@ -199,7 +212,9 @@ const App = () => {
                 >
                     <TbArrowBigRightFilled
                         size={48}
-                        className={leftEnabled ? "text-green-500" : "text-red-500"}
+                        className={`${
+                            leftEnabled ? "text-green-500" : "text-red-500"
+                        } transform lg:rotate-0 rotate-90`}
                     />
                 </button>
             </div>
@@ -216,32 +231,34 @@ const App = () => {
                 >
                     Elabora
                 </button>
-                <JsonBox jsonContent={jsonResult || {}}
-                         onCopy={(e) => {
-                             navigator.clipboard.writeText(
-                                 JSON.stringify(jsonResult || {}, null, 2)
-                             );
-                             const button = e.target;
-                             const originalText = button.textContent;
-                             button.textContent = "Copiato!";
-                             setTimeout(() => {
-                                 button.textContent = originalText;
-                             }, 1000);
-                         }}/>
+                <JsonBox
+                    jsonContent={jsonResult || {}}
+                    onCopy={(e) => {
+                        navigator.clipboard.writeText(
+                            JSON.stringify(jsonResult || {}, null, 2)
+                        );
+                        const button = e.target;
+                        button.textContent = "Copiato!";
+                        setTimeout(() => {
+                            button.textContent = "Copia";
+                        }, 1000);
+                    }}
+                />
+                {/* Pulsanti per il download CSV e XLSX */}
                 <div className="flex justify-end space-x-4 mt-4">
                     <img
                         src="https://i.ibb.co/s5vwsZk/csv-file.png"
                         alt="CSV Icon"
                         className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
                         title="Scarica CSV"
-                        onClick={generateCSV}
+                        onClick={generateCSV} // Funzione di download CSV
                     />
                     <img
                         src="https://i.ibb.co/8BrYpCy/xlsx.png"
                         alt="XLSX Icon"
                         className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
                         title="Scarica XLSX"
-                        onClick={generateXLSX}
+                        onClick={generateXLSX} // Funzione di download XLSX
                     />
                 </div>
             </div>
@@ -256,7 +273,9 @@ const App = () => {
                 >
                     <TbArrowBigRightFilled
                         size={48}
-                        className={rightEnabled ? "text-green-500" : "text-red-500"}
+                        className={`${
+                            rightEnabled ? "text-green-500" : "text-red-500"
+                        } transform lg:rotate-0 rotate-90`}
                     />
                 </button>
             </div>
