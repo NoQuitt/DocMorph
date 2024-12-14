@@ -19,9 +19,10 @@ export class ProcessService {
   // Estrattore per file XLSX
   private async extractXlsxContent(filePath: string): Promise<string> {
     const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0]; // Legge il primo foglio
-    const sheet = workbook.Sheets[sheetName];
-    return xlsx.utils.sheet_to_csv(sheet); // Converte in CSV per comodità
+    const allSheets = workbook.SheetNames.map(sheetName =>
+      xlsx.utils.sheet_to_csv(workbook.Sheets[sheetName]),
+    );
+    return allSheets.join('\n'); 
   }
 
   // Estrattore per file CSV
