@@ -6,6 +6,7 @@ import * as mammoth from 'mammoth';
 import * as xlsx from 'xlsx';
 import * as csv from 'csv-parser';
 import pdfParse from 'pdf-parse';
+import * as path from 'path';
 
 @Injectable()
 export class ProcessService {
@@ -131,7 +132,14 @@ export class ProcessService {
     const aiResponse = await this.processWithGrok(filePath, prompt, systemPrompt);
 
     const fileExtension = mime.extension(mime.lookup(filePath) || 'txt');
-    const updatedFilePath = `results/filled_document_${Date.now()}.${fileExtension}`;
+    const resultsDir = path.join(process.cwd(), 'results');
+
+    // Controlla e crea la cartella results se non esiste
+    if (!fs.existsSync(resultsDir)) {
+      fs.mkdirSync(resultsDir);
+    }
+
+    const updatedFilePath = path.join(resultsDir, `filled_document_${Date.now()}.${fileExtension}`);
     await fs.writeFile(updatedFilePath, aiResponse);
 
     setTimeout(async () => {
