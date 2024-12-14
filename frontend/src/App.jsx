@@ -3,6 +3,7 @@ import Column from "./components/Column";
 import JsonBox from "./components/JsonBox";
 import Swal from "sweetalert2";
 import { TbArrowBigRightFilled } from "react-icons/tb";
+import * as XLSX from "xlsx";
 
 const App = () => {
     const [leftEnabled, setLeftEnabled] = useState(true);
@@ -12,14 +13,88 @@ const App = () => {
     const [textareaContent, setTextareaContent] = useState("");
     const [jsonResult, setJsonResult] = useState(null);
 
-    // Gestione del caricamento file
+    // Gestione caricamento file
     const handleFileSelect = (side, e) => {
         const file = e.target.files[0] || null;
         if (side === "left") setLeftFile(file);
         if (side === "right") setRightFile(file);
     };
 
-    // Funzione per inviare i dati al backend
+    // Generazione file CSV
+    const generateCSV = () => {
+        if (!jsonResult) {
+            Swal.fire({
+                icon: "error",
+                title: "Errore",
+                text: "Nessun dato da esportare!",
+            });
+            return;
+        }
+
+        const rows = [];
+
+        const flattenJSON = (obj, parentKey = "") =>
+            Object.keys(obj).forEach((key) => {
+                const fullKey = parentKey ? `${parentKey}.${key}` : key;
+                if (typeof obj[key] === "object" && obj[key] !== null) {
+                    flattenJSON(obj[key], fullKey);
+                } else {
+                    rows.push({ key: fullKey, value: obj[key] });
+                }
+            });
+
+        flattenJSON(jsonResult);
+
+        const csvContent =
+            "data:text/csv;charset=utf-8," +
+            rows.map((row) => `${row.key},${row.value}`).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "data.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Generazione file XLSX
+    const generateXLSX = () => {
+        if (!jsonResult) {
+            Swal.fire({
+                icon: "error",
+                title: "Errore",
+                text: "Nessun dato da esportare!",
+            });
+            return;
+        }
+
+        const flattenJSON = (obj, parentKey = "") => {
+            const rows = [];
+            const recursiveFlatten = (obj, parentKey = "") => {
+                Object.keys(obj).forEach((key) => {
+                    const fullKey = parentKey ? `${parentKey}.${key}` : key;
+                    if (typeof obj[key] === "object" && obj[key] !== null) {
+                        recursiveFlatten(obj[key], fullKey);
+                    } else {
+                        rows.push({ Key: fullKey, Value: obj[key] });
+                    }
+                });
+            };
+            recursiveFlatten(obj, parentKey);
+            return rows;
+        };
+
+        const data = flattenJSON(jsonResult);
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Dati Estratti");
+
+        XLSX.writeFile(wb, "data.xlsx");
+    };
+
+    // Funzione per elaborare i dati
     const handleProcess = async () => {
         if (!textareaContent.trim()) {
             Swal.fire({
@@ -48,42 +123,39 @@ const App = () => {
             return;
         }
 
-        // Mostra il SweetAlert con la barra di caricamento
+        // Mostra barra di caricamento
         Swal.fire({
             title: "Elaborazione in corso...",
-            html: '<div class="w-full bg-gray-200 rounded-full"><div class="bg-blue-500 text-xs font-medium text-blue-100 text-center p-1 leading-none rounded-full" style="width: 0%;" id="loading-bar">0%</div></div>',
+            html: `<div class="swal2-loader"></div>`,
             allowOutsideClick: false,
-            showConfirmButton: false,
             didOpen: () => {
                 Swal.showLoading();
             },
         });
 
-        // Simula il progresso
-        const updateProgress = (progress) => {
-            const loadingBar = document.getElementById("loading-bar");
-            if (loadingBar) {
-                loadingBar.style.width = `${progress}%`;
-                loadingBar.textContent = `${progress}%`;
-            }
-        };
+        const formData = new FormData();
+        formData.append("query", textareaContent.trim());
+        formData.append("enableExtract", leftEnabled.toString());
+        formData.append("enableFill", rightEnabled.toString());
 
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 10;
-            updateProgress(progress);
-            if (progress >= 100) clearInterval(interval);
-        }, 300);
+        if (leftEnabled && leftFile) {
+            formData.append("files", leftFile);
+        }
+
+        if (rightEnabled && rightFile) {
+            formData.append("files", rightFile);
+        }
 
         try {
             const response = await fetch("http://localhost:3000/process/", {
                 method: "POST",
-                body: new FormData(),
+                body: formData,
             });
 
             if (response.ok) {
                 const result = await response.json();
                 setJsonResult(result);
+
                 Swal.fire({
                     icon: "success",
                     title: "Successo",
@@ -104,23 +176,11 @@ const App = () => {
                 title: "Errore di rete",
                 text: "Impossibile contattare il server.",
             });
-        } finally {
-            clearInterval(interval); // Ferma l'intervallo
-            Swal.close(); // Chiude la finestra di caricamento
-        }
-    };
-
-    const toggleZone = (zone) => {
-        if (zone === "left") {
-            setLeftEnabled(!leftEnabled);
-        } else if (zone === "right") {
-            setRightEnabled(!rightEnabled);
         }
     };
 
     return (
         <div className="w-full h-screen grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-0">
-            {/* Colonna sinistra */}
             <Column
                 title="Estrazione"
                 enabled={leftEnabled}
@@ -128,15 +188,13 @@ const App = () => {
                 onFileSelect={(e) => handleFileSelect("left", e)}
                 fileName={leftFile?.name || ""}
             />
-
-            {/* Freccia tra sinistra e centro */}
             <div
                 className={`flex items-center justify-center ${
                     leftEnabled ? "text-green-500" : "text-red-500"
                 } mx-4`}
             >
                 <button
-                    onClick={() => toggleZone("left")}
+                    onClick={() => setLeftEnabled(!leftEnabled)}
                     className="cursor-pointer hover:scale-110 transition-transform"
                 >
                     <TbArrowBigRightFilled
@@ -145,8 +203,6 @@ const App = () => {
                     />
                 </button>
             </div>
-
-            {/* Colonna centrale */}
             <div className="border rounded-lg bg-gray-50 flex flex-col p-6 relative">
                 <textarea
                     className="w-full h-2/3 border rounded-lg p-4 text-sm resize-none mb-6"
@@ -160,44 +216,42 @@ const App = () => {
                 >
                     Elabora
                 </button>
-                <JsonBox
-                    jsonContent={jsonResult || {}}
-                    onCopy={(e) => {
-                        navigator.clipboard.writeText(
-                            JSON.stringify(jsonResult || {}, null, 2)
-                        );
-                        const button = e.target;
-                        const originalText = button.textContent;
-                        button.textContent = "Copiato!";
-                        setTimeout(() => {
-                            button.textContent = originalText;
-                        }, 1000);
-                    }}
-                />
+                <JsonBox jsonContent={jsonResult || {}}
+                         onCopy={(e) => {
+                             navigator.clipboard.writeText(
+                                 JSON.stringify(jsonResult || {}, null, 2)
+                             );
+                             const button = e.target;
+                             const originalText = button.textContent;
+                             button.textContent = "Copiato!";
+                             setTimeout(() => {
+                                 button.textContent = originalText;
+                             }, 1000);
+                         }}/>
                 <div className="flex justify-end space-x-4 mt-4">
                     <img
                         src="https://i.ibb.co/s5vwsZk/csv-file.png"
                         alt="CSV Icon"
                         className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
                         title="Scarica CSV"
+                        onClick={generateCSV}
                     />
                     <img
                         src="https://i.ibb.co/8BrYpCy/xlsx.png"
                         alt="XLSX Icon"
                         className="w-8 h-8 cursor-pointer hover:scale-110 transition-transform"
                         title="Scarica XLSX"
+                        onClick={generateXLSX}
                     />
                 </div>
             </div>
-
-            {/* Freccia tra centro e destra */}
             <div
                 className={`flex items-center justify-center ${
                     rightEnabled ? "text-green-500" : "text-red-500"
                 } mx-4`}
             >
                 <button
-                    onClick={() => toggleZone("right")}
+                    onClick={() => setRightEnabled(!rightEnabled)}
                     className="cursor-pointer hover:scale-110 transition-transform"
                 >
                     <TbArrowBigRightFilled
@@ -206,8 +260,6 @@ const App = () => {
                     />
                 </button>
             </div>
-
-            {/* Colonna destra */}
             <Column
                 title="Compilazione"
                 enabled={rightEnabled}
