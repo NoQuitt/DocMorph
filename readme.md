@@ -1,4 +1,4 @@
-# DocMorph AI - Frontend
+# DocMorph AI
 
 ## Description
 DocMorph AI is a modern AI-powered document management platform. The frontend is built to provide users with an intuitive interface to interact with advanced backend capabilities for extracting and filling data in documents.
@@ -18,7 +18,7 @@ DocMorph AI is a modern AI-powered document management platform. The frontend is
 ## Setup
 1. Clone this repository:
     ```bash
-    git clone https://github.com/your-repo/DocMorphAI-frontend.git
+    git clone https://github.com/NoQuitt/DocMorphAI.git
     ```
 
 2. Install dependencies:
