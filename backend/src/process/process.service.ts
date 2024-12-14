@@ -133,6 +133,18 @@ export class ProcessService {
     const fileExtension = mime.extension(mime.lookup(filePath) || 'txt');
     const updatedFilePath = `results/filled_document_${Date.now()}.${fileExtension}`;
     await fs.writeFile(updatedFilePath, aiResponse);
+
+    setTimeout(async () => {
+      try {
+        if (fs.existsSync(updatedFilePath)) {
+          await fs.unlink(updatedFilePath);
+          console.log(`File ${updatedFilePath} eliminato automaticamente.`);
+        }
+      } catch (error) {
+        console.error(`Errore durante l'eliminazione del file ${updatedFilePath}:`, error);
+      }
+    }, 60000); // 1 minuto
+
     return updatedFilePath;
   }
 
