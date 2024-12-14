@@ -53,6 +53,12 @@ export class ProcessController {
           files[1].path,
           dataToFill,
         );
+      } else if (enableFill === 'true' && enableExtract === 'false' && files[0]) {
+        const dataToFill = JSON.parse(query);
+        filledFilePath = await this.processService.fillData(
+          files[0].path,
+          dataToFill,
+        );
       }
 
       // Cleanup dei file originali
