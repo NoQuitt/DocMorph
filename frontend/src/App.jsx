@@ -44,7 +44,11 @@ const App = () => {
             const recursiveFlatten = (obj, parentKey = "") => {
                 Object.keys(obj).forEach((key) => {
                     const fullKey = parentKey ? `${parentKey}.${key}` : key;
-                    if (typeof obj[key] === "object" && obj[key] !== null) {
+                    if (Array.isArray(obj[key])) {
+                        obj[key].forEach((item, index) => {
+                            recursiveFlatten(item, `${fullKey}[${index}]`);
+                        });
+                    } else if (typeof obj[key] === "object" && obj[key] !== null) {
                         recursiveFlatten(obj[key], fullKey);
                     } else {
                         rows.push({ Key: fullKey, Value: obj[key] });
@@ -62,7 +66,8 @@ const App = () => {
         const csvRows = [headers.join(",")]; // Header row
     
         data.forEach((row) => {
-            const values = [row.Key, row.Value];
+            let key = row.Key.replace(/^extractedData\./, "");
+            const values = [key, row.Value];
             csvRows.push(values.map((v) => `"${v}"`).join(",")); // Escape valori con virgolette
         });
     
@@ -74,7 +79,8 @@ const App = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    };    
+    };
+        
 
     // Generazione file XLSX
     const generateXLSX = () => {
