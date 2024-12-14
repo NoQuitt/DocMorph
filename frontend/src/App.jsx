@@ -30,25 +30,35 @@ const App = () => {
             });
             return;
         }
-
-        const rows = [];
-
-        const flattenJSON = (obj, parentKey = "") =>
-            Object.keys(obj).forEach((key) => {
-                const fullKey = parentKey ? `${parentKey}.${key}` : key;
-                if (typeof obj[key] === "object" && obj[key] !== null) {
-                    flattenJSON(obj[key], fullKey);
-                } else {
-                    rows.push({ key: fullKey, value: obj[key] });
-                }
-            });
-
-        flattenJSON(jsonResult);
-
-        const csvContent =
-            "data:text/csv;charset=utf-8," +
-            rows.map((row) => `${row.key},${row.value}`).join("\n");
-
+    
+        const flattenJSON = (obj, parentKey = "") => {
+            const rows = [];
+            const recursiveFlatten = (obj, parentKey = "") => {
+                Object.keys(obj).forEach((key) => {
+                    const fullKey = parentKey ? `${parentKey}.${key}` : key;
+                    if (typeof obj[key] === "object" && obj[key] !== null) {
+                        recursiveFlatten(obj[key], fullKey);
+                    } else {
+                        rows.push({ Key: fullKey, Value: obj[key] });
+                    }
+                });
+            };
+            recursiveFlatten(obj, parentKey);
+            return rows;
+        };
+    
+        const data = flattenJSON(jsonResult);
+    
+        // Genera il contenuto CSV
+        const headers = ["Key", "Value"];
+        const csvRows = [headers.join(",")]; // Header row
+    
+        data.forEach((row) => {
+            const values = [row.Key, row.Value];
+            csvRows.push(values.map((v) => `"${v}"`).join(",")); // Escape valori con virgolette
+        });
+    
+        const csvContent = `data:text/csv;charset=utf-8,${csvRows.join("\n")}`;
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -56,7 +66,7 @@ const App = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    };
+    };    
 
     // Generazione file XLSX
     const generateXLSX = () => {
