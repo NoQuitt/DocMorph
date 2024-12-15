@@ -173,7 +173,7 @@ const Application = () => {
         }
 
         try {
-            const response = await fetch("https://api.sjmpxtico.codes/process/", {
+            const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/process/`, {
                 method: "POST",
                 body: formData,
             });
@@ -183,7 +183,7 @@ const Application = () => {
                 setJsonResult(result);
 
                 if (result.downloadLink) {
-                    initiateDownload(`https://api.sjmpxtico.codes${result.downloadLink}`);
+                    initiateDownload(`${process.env.REACT_APP_API_BASE_URL}${result.downloadLink}`);
                 }
 
                 Swal.fire({
