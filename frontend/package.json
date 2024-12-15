@@ -1,6 +1,7 @@
 {
   "name": "landing-page",
   "version": "0.1.0",
+  "proxy": "http://152.89.254.114:3006",
   "private": true,
   "dependencies": {
     "framer-motion": "^11.14.4",
