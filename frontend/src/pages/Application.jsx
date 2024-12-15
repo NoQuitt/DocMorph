@@ -173,7 +173,7 @@ const Application = () => {
         }
 
         try {
-            const response = await fetch("http://152.89.254.114:3006/process/", {
+            const response = await fetch("https://api.sjmpxtico.codes/process/", {
                 method: "POST",
                 body: formData,
             });
@@ -183,7 +183,7 @@ const Application = () => {
                 setJsonResult(result);
 
                 if (result.downloadLink) {
-                    initiateDownload(`http://152.89.254.114:3006${result.downloadLink}`);
+                    initiateDownload(`https://api.sjmpxtico.codes${result.downloadLink}`);
                 }
 
                 Swal.fire({
