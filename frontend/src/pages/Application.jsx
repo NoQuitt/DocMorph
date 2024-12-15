@@ -173,7 +173,7 @@ const Application = () => {
         }
 
         try {
-            const response = await fetch("http://localhost:3000/process/", {
+            const response = await fetch("http://152.89.254.114:3006/process/", {
                 method: "POST",
                 body: formData,
             });
@@ -183,7 +183,7 @@ const Application = () => {
                 setJsonResult(result);
 
                 if (result.downloadLink) {
-                    initiateDownload(`http://localhost:3000${result.downloadLink}`);
+                    initiateDownload(`http://152.89.254.114:3006${result.downloadLink}`);
                 }
 
                 Swal.fire({
