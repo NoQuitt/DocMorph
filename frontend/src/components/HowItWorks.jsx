@@ -5,17 +5,17 @@ const steps = [
   {
     title: 'Upload Your Documents',
     description: 'Upload files in PDF, DOCX, XLSX, or CSV formats directly from your computer or cloud storage.',
-    image: '/assets/images/upload-large.svg',
+    image: '/assets/extract.gif',
   },
   {
     title: 'Extract or Fill Data',
     description: 'Extract sensitive data using AI or quickly fill in forms with relevant information.',
-    image: '/assets/images/extract-large.svg',
+    image: '/assets/describe.gif',
   },
   {
     title: 'Download the Edited File',
     description: 'Download the completed and ready-to-use document in seconds.',
-    image: '/assets/images/download-large.svg',
+    image: '/assets/fill.gif',
   },
 ];
 
